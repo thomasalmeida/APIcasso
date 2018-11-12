@@ -8,6 +8,7 @@ module Apicasso
 
     include Swagger::Blocks
 
+    # Definitions of Application
     swagger_root do
       MODELS_EXCLUDED = [::ApplicationRecord, ActiveRecord::SchemaMigration, Apicasso::ApplicationRecord, Apicasso::Key, Apicasso::Request, Apicasso::ApidocsController, ActiveStorage::Attachment, ActiveStorage::Blob].freeze
       key :swagger, '2.0'
@@ -23,6 +24,7 @@ module Apicasso
           key :name, I18n.t('application.license')
         end
       end
+      # Definitions of models from Application
       ActiveRecord::Base.descendants.each do |model|
         unless MODELS_EXCLUDED.include?(model)
           tag do
@@ -45,8 +47,8 @@ module Apicasso
 
     # Eager load application to be able to list all models
     Rails.application.eager_load! unless Rails.configuration.cache_classes
-    # A list of all classes that have swagger_* declarations, which gets injected
-    # by this gem in all `ActiveRecord::Base` classes
+    # A list of all classes that have swagger_* declarations, which gets
+    # injected by this gem in all `ActiveRecord::Base` classes
     SWAGGERED_CLASSES = [
       *ActiveRecord::Base.descendants,
       self
@@ -62,6 +64,7 @@ module Apicasso
       end
     end
 
+    # Generate metadata to each class of application
     SWAGGERED_CLASSES.each do |klass|
       unless MODELS_EXCLUDED.include?(klass)
         swagger_schema klass.name.to_sym do
@@ -105,8 +108,10 @@ module Apicasso
       end
     end
 
+    # Builds JSON of definitions with operations from which model
     ActiveRecord::Base.descendants.each do |model|
       unless MODELS_EXCLUDED.include?(model)
+        # Resource definitions of GET, OPTIONS, POST
         swagger_path "/#{model.name.underscore}" do
           operation :get do
             key :summary, I18n.t("activerecord.models.#{model.name.underscore}.index.summary", default: model.name)
@@ -250,6 +255,7 @@ module Apicasso
             end
           end
         end
+        # Resource definitions of PATCH, GET, DELETE
         swagger_path "/#{model.name.underscore}/{id}" do
           operation :patch do
             key :description, I18n.t("activerecord.models.#{model.name.underscore}.update.response",
@@ -332,6 +338,7 @@ module Apicasso
           end
         end
 
+        # Resource's associations definitions
         model.reflect_on_all_associations.map(&:name).each do |association|
           inner_name = model.reflect_on_all_associations.select{ |ass| ass.name == association }.first.class_name
           ASSOCIATION_EXCLUDED = ['ActiveStorage::Attachment', 'ActiveStorage::Blob'].freeze
@@ -475,6 +482,7 @@ module Apicasso
       end
     end
 
+    # Method that generates Swagger JSON
     def index
       render json: Swagger::Blocks.build_root_json(SWAGGERED_CLASSES).to_json
     end
