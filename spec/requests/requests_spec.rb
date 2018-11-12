@@ -111,9 +111,9 @@ RSpec.describe 'Used Model requests', type: :request do
         expect(response).to have_http_status(:ok)
       end
 
-      it 'returns all records that have field queried' do
+      it 'returns all records with id (default) and that have field queried' do
         JSON.parse(response.body)['entries'].each do |record|
-          expect(record.keys).to include(field_select)
+          expect(record.keys).to eq(['id', field_select])
         end
       end
     end
